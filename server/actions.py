@@ -1,4 +1,4 @@
-move_speed = 5
+move_speed = 2
 
 def move_player(dir, clients, addr):
 	for client in clients:

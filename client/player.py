@@ -41,11 +41,13 @@ class Wizard():
 		self.img_draw = self.pygame.transform.scale(self.img_draw, self.hero_size)
 
 	def set_pos(self, new_pos):
+		new_pos = tuple(new_pos)
 		if self.pos == new_pos:
 			self.state = self.STAY
 		else:
 			self.state = self.MOVE
-		self.pos = tuple(new_pos)
+
+		self.pos = new_pos
 
 	def animate_sprite(self):
 		if self.state == self.MOVE:
