@@ -8,7 +8,7 @@ class Wizard():
 
 		#textures
 		self.hero_size = (40, 40)
-		self.color = [48,73,196]
+		self.color = None
 
 		self.cur_rect_pos = (20, 15, 18, 19)#8x6
 		#self.load_texture()
@@ -17,12 +17,17 @@ class Wizard():
 
 		self.counter = 0
 
+		self.id = None
+
 		self.MOVE, self.STAY = 0, 1
 
-		self.state = self.MOVE
+		self.state = self.STAY
 
 		self.stay_rect_poses = {'pos': [(20, 15, 18, 19), (62, 15, 18, 19)], 'interval': 1.25}
 		self.move_rect_poses = {'pos': [(20, 15, 18, 19), (40, 15, 18, 19), (60, 15, 18, 19), (80, 15, 18, 19)], 'interval': 4}
+
+	def get_id(self):
+		return self.id
 
 	def load_texture(self):
 		self.image = self.pygame.image.load("data/heroes/wizard_standart.png")
@@ -34,6 +39,13 @@ class Wizard():
 	def change_rect(self):
 		self.img_draw = self.image.subsurface(self.cur_rect_pos)
 		self.img_draw = self.pygame.transform.scale(self.img_draw, self.hero_size)
+
+	def set_pos(self, new_pos):
+		if self.pos == new_pos:
+			self.state = self.STAY
+		else:
+			self.state = self.MOVE
+		self.pos = tuple(new_pos)
 
 	def animate_sprite(self):
 		if self.state == self.MOVE:

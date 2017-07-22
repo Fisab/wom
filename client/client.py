@@ -2,7 +2,7 @@ import pygame
 import player
 import network
 
-import threading
+import control
 
 class Game():
 	def __init__(self):
@@ -19,6 +19,16 @@ class Game():
 		self.id = None
 		self.network_thread = None
 
+		self.players = []
+
+	def create_player(self, color, pos, id):
+		p = player.Wizard(pygame, self.tick)
+		p.pos = tuple(pos)
+		p.color = color
+		p.id = id
+		p.load_texture()
+		self.players.append(p)
+
 	def main(self):
 		pygame.display.set_caption("Wrestling of Magicians")
 
@@ -26,9 +36,13 @@ class Game():
 		clock = pygame.time.Clock()
 
 		p = player.Wizard(pygame, self.tick)
+		self.players.append(p)
+
 		n = network.Network(p, self)
 		n.connect()
-		p.load_texture()
+
+		for pl in self.players:
+			pl.load_texture()
 		#self.network_thread = threading.Thread(target=n.main)
 		#self.network_thread.start()
 
@@ -41,8 +55,10 @@ class Game():
 			if self.state == self.RUNNING:
 				self.screen.fill((202,202,202))
 
-				p.draw(self.screen)
-
+				for pl in self.players:
+					pl.draw(self.screen)
+				dir = control.move_player(pygame)
+				n.update({'move': dir})
 			pygame.display.flip()
 			clock.tick(self.tick)
 		

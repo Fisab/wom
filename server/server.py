@@ -5,6 +5,7 @@ from random import randint
 
 import tools
 import map
+import actions
 
 #
 import threading
@@ -33,15 +34,19 @@ class Server():
 		self.clients = []
 
 		self.timeout_time = 5#sec
+		self.timeout = False
 
 		self.recv_thread = None
 		self.recv_amount = 1024
 
 		self.mult_pl_per_ip = True#multiple connect per 1 ip
 
+		self.max_id = 0
+
 	###	first connect
 	def gen_id(self):
-		return len(self.clients) + 1
+		self.max_id += 1
+		return self.max_id
 
 	def get_free_color(self):
 		busy_colors = []
@@ -68,17 +73,33 @@ class Server():
 			'last_req': tools.get_time()
 		}
 		self.clients.append(r)
+
+	def get_all_players(self, id=None):
+		#if id!=None return players without this
+		res = []
+		for client in self.clients:
+			if id != None and client['id'] == id:
+				continue
+			res.append({
+				'color': palette[client['color']],
+				'pos': client['pos'],
+				'id': client['id']
+			})
+		return res
+
 	def gen_start_msg(self, addr):
 		client = self.get_client_via_addr(addr)
+		players = self.get_all_players()
 		res = {
-			'color': palette[client['color']],
+			'ur_hero': {
+				'color': palette[client['color']],
+				'pos': client['pos'],
+				'id': client['id']
+			},
 			'id': client['id'],
-			'pos': client['pos']
+			'players': players
 		}
-		r = json.dumps(res, separators=(',', ':'))
-		r = str.encode(r)
-
-		self.udp_socket.sendto(r, addr)
+		self.send(addr, res)
 		
 	def gen_data(self, addr):
 		addr = list(addr)
@@ -87,7 +108,19 @@ class Server():
 
 	####
 
+	def send(self, addr, data):
+		data = json.dumps(data, separators=(',', ':'))
+		data = str.encode(data)
+		#print(data)
+		self.udp_socket.sendto(data, addr)
+
+	def drop(self, addr):
+		res = {'error': 'You already on server'}
+		send(addr, data)
+	#
 	def garbage_grabber(self):#delete timeout users
+		if not self.timeout:
+			return
 		cur_time = tools.get_time()
 		for_delete = []
 		for i in range(len(self.clients)):
@@ -116,19 +149,39 @@ class Server():
 					return True, True
 		return False, False
 
+	def analyze_req(self, data, addr):
+		data = json.loads(data.decode())
+		if 'new' in data and data['new'] == True:
+			self.gen_data(addr)
+			self.gen_start_msg(addr)
+		else:
+			if 'move' in data:
+				self.clients, cl = actions.move_player(data['move'], self.clients, addr)
+				#{'last_req': 1500745798, 'pos': [267, 368], 'color': 'red', 'ip': '127.0.0.1', 'id': 1, 'port': 50263}
+				r = {'ur_hero': {
+									'pos': cl['pos'],
+									'color': cl['color'],
+									'id': cl['id']
+								}, 
+					 'players': self.get_all_players(cl['id'])}
+				self.send(addr, r)
+
+
+
 	def recv(self):
 		print(' - Server start recv data ', self.recv_amount, ' - ')
 		while True:
 			data, addr = self.udp_socket.recvfrom(self.recv_amount)
-			print(data, addr)
+			#print(data, addr)
 
 			addr_ = list(addr)
 			ip, port = addr_[0], addr_[1]
 			connected, drop = self.check_already_connected(ip, port)
-			if not drop:
-				print(data.decode())
-				self.gen_data(addr)
-				self.gen_start_msg(addr)
+			
+			if drop:
+				self.drop(addr)
+				continue
+			self.analyze_req(data, addr)
 
 	def main(self):
 		print(' - Server will run on port %s - ' % self.port)
