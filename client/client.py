@@ -1,5 +1,8 @@
 import pygame
 import player
+import network
+
+import threading
 
 class Game():
 	def __init__(self):
@@ -13,13 +16,21 @@ class Game():
 
 		self.tick = 60
 
+		self.id = None
+		self.network_thread = None
+
 	def main(self):
-		pygame.display.set_caption("Wrestling of magicians")
+		pygame.display.set_caption("Wrestling of Magicians")
 
 		done = False
 		clock = pygame.time.Clock()
 
 		p = player.Wizard(pygame, self.tick)
+		n = network.Network(p, self)
+		n.connect()
+		p.load_texture()
+		#self.network_thread = threading.Thread(target=n.main)
+		#self.network_thread.start()
 
 		while not done:
 			

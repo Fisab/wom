@@ -4,13 +4,14 @@ class Wizard():
 	def __init__(self, pygame, tick):
 		self.pygame = pygame
 
-		self.hero_size = (40, 40)
+		self.pos = None
 
 		#textures
+		self.hero_size = (40, 40)
 		self.color = [48,73,196]
 
 		self.cur_rect_pos = (20, 15, 18, 19)#8x6
-		self.load_texture()
+		#self.load_texture()
 
 		self.tick = tick
 
@@ -61,6 +62,7 @@ class Wizard():
 	
 	def draw(self, screen):
 		#pass
-		screen.blit(self.img_draw, (100,100))
+		#print(self.pos)
+		screen.blit(self.img_draw, self.pos)
 		self.animate_sprite()
 			
